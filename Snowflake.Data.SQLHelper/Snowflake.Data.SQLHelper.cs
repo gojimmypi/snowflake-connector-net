@@ -20,7 +20,7 @@
 // FITNESS FOR A PARTICULAR PURPOSE.
 //==============================================================================
 //
-// Converted to use with Snowflake.Data by gojimmypi Marh 25, 2021
+// Converted to use with Snowflake.Data by gojimmypi March 25, 2021
 //  
 // https://github.com/gojimmypi/snowflake-connector-net
 //
