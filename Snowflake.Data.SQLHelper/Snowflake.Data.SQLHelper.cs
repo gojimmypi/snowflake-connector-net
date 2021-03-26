@@ -24,12 +24,14 @@
 //  
 // https://github.com/gojimmypi/snowflake-connector-net
 //
+
+
 using System;
 using System.Data;
 using System.Xml;
 using System.Data.SqlClient; // NuGet package
 using System.Collections;
-using Snowflake.Data.Client; //
+using Snowflake.Data.Client; // Often a NuGet package, but a project reference here
 
 
 //Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
@@ -72,26 +74,24 @@ using Snowflake.Data.Client; //
 //System.Text.RegularExpressions.4.3.1
 
 
-
-
-namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
+namespace Snowflake.Data
 {
     /// <summary>
     /// The SqlHelper class is intended to encapsulate high performance, scalable best practices for 
     /// common uses of SqlClient.
     /// </summary>
-    public sealed class SqlHelper
+    public sealed class SnowflakeSqlHelper
     {
         #region private utility methods & constructors
 
         //Since this class provides only static methods, make the default constructor private to prevent 
         //instances from being created with "new SqlHelper()".
-        private SqlHelper() { }
+        private SnowflakeSqlHelper() { }
 
 
 
         /// <summary>
-        /// This method is used to attach array of SqlParameters to a System.Data.Common.DbCommand.
+        /// This method is used to attach array of SnowflakeDbParameters to a SnowflakeDbCommand.
         /// 
         /// This method will assign a value of DbNull to any parameter with a direction of
         /// InputOutput and a value of null.  
@@ -101,10 +101,10 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// where the user provided no input value.
         /// </summary>
         /// <param name="command">The command to which the parameters will be added</param>
-        /// <param name="commandParameters">an array of SqlParameters tho be added to command</param>
-        private static void AttachParameters(System.Data.Common.DbCommand command, SqlParameter[] commandParameters)
+        /// <param name="commandParameters">an array of SnowflakeDbParameters tho be added to command</param>
+        private static void AttachParameters(System.Data.Common.DbCommand command, SnowflakeDbParameter[] commandParameters)
         {
-            foreach (SqlParameter p in commandParameters)
+            foreach (SnowflakeDbParameter p in commandParameters)
             {
                 //check for derived output value with no value assigned
                 if ((p.Direction == ParameterDirection.InputOutput) && (p.Value == null))
@@ -117,11 +117,11 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// This method assigns an array of values to an array of SqlParameters.
+        /// This method assigns an array of values to an array of SnowflakeDbParameters.
         /// </summary>
-        /// <param name="commandParameters">array of SqlParameters to be assigned values</param>
+        /// <param name="commandParameters">array of SnowflakeDbParameters to be assigned values</param>
         /// <param name="parameterValues">array of objects holding the values to be assigned</param>
-        private static void AssignParameterValues(SqlParameter[] commandParameters, object[] parameterValues)
+        private static void AssignParameterValues(SnowflakeDbParameter[] commandParameters, object[] parameterValues)
         {
             if ((commandParameters == null) || (parameterValues == null))
             {
@@ -135,7 +135,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
                 throw new ArgumentException("Parameter count does not match Parameter Value count.");
             }
 
-            //iterate through the SqlParameters, assigning the values from the corresponding position in the 
+            //iterate through the SnowflakeDbParameters, assigning the values from the corresponding position in the 
             //value array
             for (int i = 0, j = commandParameters.Length; i < j; i++)
             {
@@ -147,13 +147,13 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// This method opens (if necessary) and assigns a connection, transaction, command type and parameters 
         /// to the provided command.
         /// </summary>
-        /// <param name="command">the System.Data.Common.DbCommand to be prepared</param>
+        /// <param name="command">the SnowflakeDbCommand to be prepared</param>
         /// <param name="connection">a valid SnowflakeDbConnection, on which to execute this command</param>
         /// <param name="transaction">a valid SnowflakeDbTransaction, or 'null'</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
-        /// <param name="commandParameters">an array of SqlParameters to be associated with the command or 'null' if no parameters are required</param>
-        private static void PrepareCommand(System.Data.Common.DbCommand command, System.Data.Common.DbConnection connection, SnowflakeDbTransaction transaction, CommandType commandType, string commandText, SqlParameter[] commandParameters)
+        /// <param name="commandParameters">an array of SnowflakeDbParameters to be associated with the command or 'null' if no parameters are required</param>
+        private static void PrepareCommand(System.Data.Common.DbCommand command, System.Data.Common.DbConnection connection, SnowflakeDbTransaction transaction, CommandType commandType, string commandText, SnowflakeDbParameter[] commandParameters)
         {
             //if the provided connection is not open, we will open it
             if (connection.State != ConnectionState.Open)
@@ -216,13 +216,15 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             string strUpdateText = @"UPDATE " + strTableName +
                 @" SET [TimeStamp] = GetDate() AND [User_ID] = @UserID";
 
-            System.Data.SqlClient.SqlParameter oParam = new SqlParameter("@UserID", userID);
+            //SnowflakeDbParameter oParam = new SnowflakeDbParameter("@UserID", userID);
 
             // Execute the UPDATE statement
-            ExecuteNonQuery(connectionString, CommandType.Text, strUpdateText, oParam);
+            // ExecuteNonQuery(connectionString, CommandType.Text, strUpdateText, oParam);
 
             // Finally, execute the DELETE statement
-            return ExecuteNonQuery(connectionString, CommandType.Text, deleteText, oParam);
+            // return ExecuteNonQuery(connectionString, CommandType.Text, deleteText, oParam);
+
+            throw new Exception("ExecuteDeleteQuery not implemented");
         }
 
         // End - Jan 20, 2007
@@ -252,16 +254,19 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             string strUpdateText = @"UPDATE " + strTableName +
                 @" SET [TimeStamp] = GetDate() AND [User_ID] = @UserID";
 
-            System.Data.SqlClient.SqlParameter oParam = new SqlParameter("@UserID", userID);
+            // SnowflakeDbParameter oParam = new SnowflakeDbParameter("@UserID", userID);
 
             // Finally, execute the DELETE statement
-            return ExecuteNonQuery(transaction, CommandType.Text, deleteText, oParam);
+            // return ExecuteNonQuery(transaction, CommandType.Text, deleteText, oParam);
+
+            throw new Exception("ExecuteDeleteQuery not implemented");
+
         }
 
         // End - Jan 29, 2007
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns no resultset and takes no parameters) against the database specified in 
+        /// Execute a SnowflakeDbCommand (that returns no resultset and takes no parameters) against the database specified in 
         /// the connection string. 
         /// </summary>
         /// <remarks>
@@ -274,8 +279,8 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>an int representing the number of rows affected by the command</returns>
         public static int ExecuteNonQuery(string connectionString, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteNonQuery(connectionString, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteNonQuery(connectionString, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         public static SnowflakeDbConnection SnowflakeDbConnectionSnowflake(string connection)
@@ -286,19 +291,19 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns no resultset) against the database specified in the connection string 
+        /// Execute a SnowflakeDbCommand (that returns no resultset) against the database specified in the connection string 
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  int result = ExecuteNonQuery(connString, CommandType.StoredProcedure, "PublishOrders", new SqlParameter("@prodid", 24));
+        ///  int result = ExecuteNonQuery(connString, CommandType.StoredProcedure, "PublishOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="connectionString">a valid connection string for a SnowflakeDbConnection</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>an int representing the number of rows affected by the command</returns>
-        public static int ExecuteNonQuery(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static int ExecuteNonQuery(string connectionString, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create & open a SnowflakeDbConnection, and dispose of it after we are done.
             using (SnowflakeDbConnection cn = new SnowflakeDbConnection())
@@ -312,7 +317,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns no resultset) against the database specified in 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns no resultset) against the database specified in 
         /// the connection string using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -332,12 +337,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteNonQuery(connectionString, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -348,7 +353,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns no resultset and takes no parameters) against the provided SnowflakeDbConnection. 
+        /// Execute a SnowflakeDbCommand (that returns no resultset and takes no parameters) against the provided SnowflakeDbConnection. 
         /// </summary>
         /// <remarks>
         /// e.g.:  
@@ -360,39 +365,39 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>an int representing the number of rows affected by the command</returns>
         public static int ExecuteNonQuery(SnowflakeDbConnection connection, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteNonQuery(connection, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteNonQuery(connection, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns no resultset) against the specified SnowflakeDbConnection 
+        /// Execute a SnowflakeDbCommand (that returns no resultset) against the specified SnowflakeDbConnection 
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  int result = ExecuteNonQuery(conn, CommandType.StoredProcedure, "PublishOrders", new SqlParameter("@prodid", 24));
+        ///  int result = ExecuteNonQuery(conn, CommandType.StoredProcedure, "PublishOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="connection">a valid SnowflakeDbConnection</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>an int representing the number of rows affected by the command</returns>
-        public static int ExecuteNonQuery(SnowflakeDbConnection connection, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static int ExecuteNonQuery(SnowflakeDbConnection connection, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create a command and prepare it for execution
-            System.Data.Common.DbCommand cmd = connection.CreateCommand();
+            SnowflakeDbCommand cmd = (SnowflakeDbCommand)connection.CreateCommand();
             PrepareCommand(cmd, connection, (SnowflakeDbTransaction)null, commandType, commandText, commandParameters);
 
             //finally, execute the command.
             int retval = cmd.ExecuteNonQuery();
 
-            // detach the SqlParameters from the command object, so they can be used again.
+            // detach the SnowflakeDbParameters from the command object, so they can be used again.
             cmd.Parameters.Clear();
             return retval;
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns no resultset) against the specified SnowflakeDbConnection 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns no resultset) against the specified SnowflakeDbConnection 
         /// using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -412,12 +417,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connection.ConnectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connection.ConnectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteNonQuery(connection, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -428,7 +433,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns no resultset and takes no parameters) against the provided SnowflakeDbTransaction. 
+        /// Execute a SnowflakeDbCommand (that returns no resultset and takes no parameters) against the provided SnowflakeDbTransaction. 
         /// </summary>
         /// <remarks>
         /// e.g.:  
@@ -440,39 +445,39 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>an int representing the number of rows affected by the command</returns>
         public static int ExecuteNonQuery(SnowflakeDbTransaction transaction, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteNonQuery(transaction, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteNonQuery(transaction, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns no resultset) against the specified SnowflakeDbTransaction
+        /// Execute a SnowflakeDbCommand (that returns no resultset) against the specified SnowflakeDbTransaction
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  int result = ExecuteNonQuery(trans, CommandType.StoredProcedure, "GetOrders", new SqlParameter("@prodid", 24));
+        ///  int result = ExecuteNonQuery(trans, CommandType.StoredProcedure, "GetOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="transaction">a valid SnowflakeDbTransaction</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>an int representing the number of rows affected by the command</returns>
-        public static int ExecuteNonQuery(SnowflakeDbTransaction transaction, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static int ExecuteNonQuery(SnowflakeDbTransaction transaction, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create a command and prepare it for execution
-            System.Data.Common.DbCommand cmd = transaction.Connection.CreateCommand();
+            SnowflakeDbCommand cmd = (SnowflakeDbCommand)transaction.Connection.CreateCommand();
             PrepareCommand(cmd, transaction.Connection, transaction, commandType, commandText, commandParameters);
 
             //finally, execute the command.
             int retval = cmd.ExecuteNonQuery();
 
-            // detach the SqlParameters from the command object, so they can be used again.
+            // detach the SnowflakeDbParameters from the command object, so they can be used again.
             cmd.Parameters.Clear();
             return retval;
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns no resultset) against the specified 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns no resultset) against the specified 
         /// SnowflakeDbTransaction using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -492,12 +497,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(transaction.Connection.ConnectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(transaction.Connection.ConnectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteNonQuery(transaction, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -513,7 +518,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         #region ExecuteDataSet
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset and takes no parameters) against the database specified in 
+        /// Execute a SnowflakeDbCommand (that returns a resultset and takes no parameters) against the database specified in 
         /// the connection string. 
         /// </summary>
         /// <remarks>
@@ -526,24 +531,24 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>a dataset containing the resultset generated by the command</returns>
         public static DataSet ExecuteDataset(string connectionString, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteDataset(connectionString, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteDataset(connectionString, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset) against the database specified in the connection string 
+        /// Execute a SnowflakeDbCommand (that returns a resultset) against the database specified in the connection string 
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  DataSet ds = ExecuteDataset(connString, CommandType.StoredProcedure, "GetOrders", new SqlParameter("@prodid", 24));
+        ///  DataSet ds = ExecuteDataset(connString, CommandType.StoredProcedure, "GetOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="connectionString">a valid connection string for a SnowflakeDbConnection</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>a dataset containing the resultset generated by the command</returns>
-        public static DataSet ExecuteDataset(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static DataSet ExecuteDataset(string connectionString, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create & open a SnowflakeDbConnection, and dispose of it after we are done.
             using (SnowflakeDbConnection cn = new SnowflakeDbConnection())
@@ -557,7 +562,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a resultset) against the database specified in 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a resultset) against the database specified in 
         /// the connection string using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -577,12 +582,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteDataset(connectionString, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -593,7 +598,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbConnection. 
+        /// Execute a SnowflakeDbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbConnection. 
         /// </summary>
         /// <remarks>
         /// e.g.:  
@@ -605,24 +610,24 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>a dataset containing the resultset generated by the command</returns>
         public static DataSet ExecuteDataset(SnowflakeDbConnection connection, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteDataset(connection, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteDataset(connection, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
+        /// Execute a SnowflakeDbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  DataSet ds = ExecuteDataset(conn, CommandType.StoredProcedure, "GetOrders", new SqlParameter("@prodid", 24));
+        ///  DataSet ds = ExecuteDataset(conn, CommandType.StoredProcedure, "GetOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="connection">a valid SnowflakeDbConnection</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>a dataset containing the resultset generated by the command</returns>
-        public static DataSet ExecuteDataset(SnowflakeDbConnection connection, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static DataSet ExecuteDataset(SnowflakeDbConnection connection, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create a command and prepare it for execution
             System.Data.Common.DbCommand cmd = connection.CreateCommand();
@@ -635,7 +640,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             //fill the DataSet using default values for DataTable names, etc.
             da.Fill(ds);
 
-            // detach the SqlParameters from the command object, so they can be used again.            
+            // detach the SnowflakeDbParameters from the command object, so they can be used again.            
             cmd.Parameters.Clear();
 
             //return the dataset
@@ -643,7 +648,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
         /// using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -663,12 +668,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connection.ConnectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connection.ConnectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteDataset(connection, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -679,7 +684,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbTransaction. 
+        /// Execute a SnowflakeDbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbTransaction. 
         /// </summary>
         /// <remarks>
         /// e.g.:  
@@ -691,27 +696,27 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>a dataset containing the resultset generated by the command</returns>
         public static DataSet ExecuteDataset(SnowflakeDbTransaction transaction, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteDataset(transaction, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteDataset(transaction, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset) against the specified SnowflakeDbTransaction
+        /// Execute a SnowflakeDbCommand (that returns a resultset) against the specified SnowflakeDbTransaction
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  DataSet ds = ExecuteDataset(trans, CommandType.StoredProcedure, "GetOrders", new SqlParameter("@prodid", 24));
+        ///  DataSet ds = ExecuteDataset(trans, CommandType.StoredProcedure, "GetOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="transaction">a valid SnowflakeDbTransaction</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>a dataset containing the resultset generated by the command</returns>
-        public static DataSet ExecuteDataset(SnowflakeDbTransaction transaction, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static DataSet ExecuteDataset(SnowflakeDbTransaction transaction, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create a command and prepare it for execution
-            System.Data.Common.DbCommand cmd = transaction.Connection.CreateCommand();
+            SnowflakeDbCommand cmd = (SnowflakeDbCommand)transaction.Connection.CreateCommand();
             PrepareCommand(cmd, transaction.Connection, transaction, commandType, commandText, commandParameters);
 
             //create the DataAdapter & DataSet
@@ -721,7 +726,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             //fill the DataSet using default values for DataTable names, etc.
             da.Fill(ds);
 
-            // detach the SqlParameters from the command object, so they can be used again.
+            // detach the SnowflakeDbParameters from the command object, so they can be used again.
             cmd.Parameters.Clear();
 
             //return the dataset
@@ -729,7 +734,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a resultset) against the specified 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a resultset) against the specified 
         /// SnowflakeDbTransaction using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -749,12 +754,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(transaction.Connection.ConnectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(transaction.Connection.ConnectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteDataset(transaction, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -781,7 +786,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Create and prepare a System.Data.Common.DbCommand, and call ExecuteReader with the appropriate CommandBehavior.
+        /// Create and prepare a SnowflakeDbCommand, and call ExecuteReader with the appropriate CommandBehavior.
         /// </summary>
         /// <remarks>
         /// If we created and opened the connection, we want the connection to be closed when the DataReader is closed.
@@ -792,13 +797,13 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <param name="transaction">a valid SnowflakeDbTransaction, or 'null'</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
-        /// <param name="commandParameters">an array of SqlParameters to be associated with the command or 'null' if no parameters are required</param>
+        /// <param name="commandParameters">an array of SnowflakeDbParameters to be associated with the command or 'null' if no parameters are required</param>
         /// <param name="connectionOwnership">indicates whether the connection parameter was provided by the caller, or created by SqlHelper</param>
         /// <returns>SqlDataReader containing the results of the command</returns>
-        private static SnowflakeDbDataReader ExecuteReader(SnowflakeDbConnection connection, SnowflakeDbTransaction transaction, CommandType commandType, string commandText, SqlParameter[] commandParameters, SnowflakeDbConnectionOwnership connectionOwnership)
+        private static SnowflakeDbDataReader ExecuteReader(SnowflakeDbConnection connection, SnowflakeDbTransaction transaction, CommandType commandType, string commandText, SnowflakeDbParameter[] commandParameters, SnowflakeDbConnectionOwnership connectionOwnership)
         {
             //create a command and prepare it for execution
-            System.Data.Common.DbCommand cmd = connection.CreateCommand();
+            SnowflakeDbCommand cmd = (SnowflakeDbCommand)connection.CreateCommand();
             PrepareCommand(cmd, connection, transaction, commandType, commandText, commandParameters);
 
             //create a reader
@@ -814,14 +819,14 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
                 dr = (SnowflakeDbDataReader)cmd.ExecuteReader(CommandBehavior.CloseConnection);
             }
 
-            // detach the SqlParameters from the command object, so they can be used again.
+            // detach the SnowflakeDbParameters from the command object, so they can be used again.
             cmd.Parameters.Clear();
 
             return dr;
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset and takes no parameters) against the database specified in 
+        /// Execute a SnowflakeDbCommand (that returns a resultset and takes no parameters) against the database specified in 
         /// the connection string. 
         /// </summary>
         /// <remarks>
@@ -834,24 +839,24 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>a SqlDataReader containing the resultset generated by the command</returns>
         public static SnowflakeDbDataReader ExecuteReader(string connectionString, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteReader(connectionString, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteReader(connectionString, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset) against the database specified in the connection string 
+        /// Execute a SnowflakeDbCommand (that returns a resultset) against the database specified in the connection string 
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  SqlDataReader dr = ExecuteReader(connString, CommandType.StoredProcedure, "GetOrders", new SqlParameter("@prodid", 24));
+        ///  SqlDataReader dr = ExecuteReader(connString, CommandType.StoredProcedure, "GetOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="connectionString">a valid connection string for a SnowflakeDbConnection</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>a SqlDataReader containing the resultset generated by the command</returns>
-        public static SnowflakeDbDataReader ExecuteReader(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static SnowflakeDbDataReader ExecuteReader(string connectionString, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create & open a SnowflakeDbConnection
             SnowflakeDbConnection cn = new SnowflakeDbConnection();
@@ -872,7 +877,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a resultset) against the database specified in 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a resultset) against the database specified in 
         /// the connection string using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -892,12 +897,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteReader(connectionString, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -908,7 +913,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbConnection. 
+        /// Execute a SnowflakeDbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbConnection. 
         /// </summary>
         /// <remarks>
         /// e.g.:  
@@ -920,31 +925,31 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>a SqlDataReader containing the resultset generated by the command</returns>
         public static SnowflakeDbDataReader ExecuteReader(SnowflakeDbConnection connection, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteReader(connection, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteReader(connection, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
+        /// Execute a SnowflakeDbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  SqlDataReader dr = ExecuteReader(conn, CommandType.StoredProcedure, "GetOrders", new SqlParameter("@prodid", 24));
+        ///  SqlDataReader dr = ExecuteReader(conn, CommandType.StoredProcedure, "GetOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="connection">a valid SnowflakeDbConnection</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>a SqlDataReader containing the resultset generated by the command</returns>
-        public static SnowflakeDbDataReader ExecuteReader(SnowflakeDbConnection connection, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static SnowflakeDbDataReader ExecuteReader(SnowflakeDbConnection connection, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //pass through the call to the private overload using a null transaction value and an externally owned connection
             return ExecuteReader(connection, (SnowflakeDbTransaction)null, commandType, commandText, commandParameters, SnowflakeDbConnectionOwnership.External);
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
         /// using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -963,7 +968,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             //if we receive parameter values, we need to figure out where they go
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connection.ConnectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connection.ConnectionString, spName);
 
                 AssignParameterValues(commandParameters, parameterValues);
 
@@ -977,7 +982,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbTransaction. 
+        /// Execute a SnowflakeDbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbTransaction. 
         /// </summary>
         /// <remarks>
         /// e.g.:  
@@ -989,31 +994,31 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>a SqlDataReader containing the resultset generated by the command</returns>
         public static SnowflakeDbDataReader ExecuteReader(SnowflakeDbTransaction transaction, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteReader(transaction, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteReader(transaction, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset) against the specified SnowflakeDbTransaction
+        /// Execute a SnowflakeDbCommand (that returns a resultset) against the specified SnowflakeDbTransaction
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///   SqlDataReader dr = ExecuteReader(trans, CommandType.StoredProcedure, "GetOrders", new SqlParameter("@prodid", 24));
+        ///   SqlDataReader dr = ExecuteReader(trans, CommandType.StoredProcedure, "GetOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="transaction">a valid SnowflakeDbTransaction</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>a SqlDataReader containing the resultset generated by the command</returns>
-        public static SnowflakeDbDataReader ExecuteReader(SnowflakeDbTransaction transaction, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static SnowflakeDbDataReader ExecuteReader(SnowflakeDbTransaction transaction, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //pass through to private overload, indicating that the connection is owned by the caller
             return ExecuteReader((SnowflakeDbConnection)transaction.Connection, transaction, commandType, commandText, commandParameters, SnowflakeDbConnectionOwnership.External);
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a resultset) against the specified
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a resultset) against the specified
         /// SnowflakeDbTransaction using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -1032,7 +1037,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             //if we receive parameter values, we need to figure out where they go
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(transaction.Connection.ConnectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(transaction.Connection.ConnectionString, spName);
 
                 AssignParameterValues(commandParameters, parameterValues);
 
@@ -1050,7 +1055,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         #region ExecuteScalar
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a 1x1 resultset and takes no parameters) against the database specified in 
+        /// Execute a SnowflakeDbCommand (that returns a 1x1 resultset and takes no parameters) against the database specified in 
         /// the connection string. 
         /// </summary>
         /// <remarks>
@@ -1063,24 +1068,24 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>an object containing the value in the 1x1 resultset generated by the command</returns>
         public static object ExecuteScalar(string connectionString, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteScalar(connectionString, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteScalar(connectionString, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a 1x1 resultset) against the database specified in the connection string 
+        /// Execute a SnowflakeDbCommand (that returns a 1x1 resultset) against the database specified in the connection string 
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  int orderCount = (int)ExecuteScalar(connString, CommandType.StoredProcedure, "GetOrderCount", new SqlParameter("@prodid", 24));
+        ///  int orderCount = (int)ExecuteScalar(connString, CommandType.StoredProcedure, "GetOrderCount", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="connectionString">a valid connection string for a SnowflakeDbConnection</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>an object containing the value in the 1x1 resultset generated by the command</returns>
-        public static object ExecuteScalar(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static object ExecuteScalar(string connectionString, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create & open a SnowflakeDbConnection, and dispose of it after we are done.
             using (SnowflakeDbConnection cn = new SnowflakeDbConnection())
@@ -1094,7 +1099,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a 1x1 resultset) against the database specified in 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a 1x1 resultset) against the database specified in 
         /// the connection string using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -1114,12 +1119,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteScalar(connectionString, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -1130,7 +1135,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a 1x1 resultset and takes no parameters) against the provided SnowflakeDbConnection. 
+        /// Execute a SnowflakeDbCommand (that returns a 1x1 resultset and takes no parameters) against the provided SnowflakeDbConnection. 
         /// </summary>
         /// <remarks>
         /// e.g.:  
@@ -1142,40 +1147,40 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>an object containing the value in the 1x1 resultset generated by the command</returns>
         public static object ExecuteScalar(SnowflakeDbConnection connection, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteScalar(connection, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteScalar(connection, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a 1x1 resultset) against the specified SnowflakeDbConnection 
+        /// Execute a SnowflakeDbCommand (that returns a 1x1 resultset) against the specified SnowflakeDbConnection 
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  int orderCount = (int)ExecuteScalar(conn, CommandType.StoredProcedure, "GetOrderCount", new SqlParameter("@prodid", 24));
+        ///  int orderCount = (int)ExecuteScalar(conn, CommandType.StoredProcedure, "GetOrderCount", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="connection">a valid SnowflakeDbConnection</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>an object containing the value in the 1x1 resultset generated by the command</returns>
-        public static object ExecuteScalar(SnowflakeDbConnection connection, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static object ExecuteScalar(SnowflakeDbConnection connection, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create a command and prepare it for execution
-            System.Data.Common.DbCommand cmd = connection.CreateCommand();
+            SnowflakeDbCommand cmd = (SnowflakeDbCommand)connection.CreateCommand();
             PrepareCommand(cmd, connection, (SnowflakeDbTransaction)null, commandType, commandText, commandParameters);
 
             //execute the command & return the results
             object retval = cmd.ExecuteScalar();
 
-            // detach the SqlParameters from the command object, so they can be used again.
+            // detach the SnowflakeDbParameters from the command object, so they can be used again.
             cmd.Parameters.Clear();
             return retval;
 
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a 1x1 resultset) against the specified SnowflakeDbConnection 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a 1x1 resultset) against the specified SnowflakeDbConnection 
         /// using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -1195,12 +1200,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connection.ConnectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connection.ConnectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteScalar(connection, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -1211,7 +1216,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a 1x1 resultset and takes no parameters) against the provided SnowflakeDbTransaction. 
+        /// Execute a SnowflakeDbCommand (that returns a 1x1 resultset and takes no parameters) against the provided SnowflakeDbTransaction. 
         /// </summary>
         /// <remarks>
         /// e.g.:  
@@ -1223,39 +1228,39 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>an object containing the value in the 1x1 resultset generated by the command</returns>
         public static object ExecuteScalar(SnowflakeDbTransaction transaction, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteScalar(transaction, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteScalar(transaction, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a 1x1 resultset) against the specified SnowflakeDbTransaction
+        /// Execute a SnowflakeDbCommand (that returns a 1x1 resultset) against the specified SnowflakeDbTransaction
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  int orderCount = (int)ExecuteScalar(trans, CommandType.StoredProcedure, "GetOrderCount", new SqlParameter("@prodid", 24));
+        ///  int orderCount = (int)ExecuteScalar(trans, CommandType.StoredProcedure, "GetOrderCount", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="transaction">a valid SnowflakeDbTransaction</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>an object containing the value in the 1x1 resultset generated by the command</returns>
-        public static object ExecuteScalar(SnowflakeDbTransaction transaction, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static object ExecuteScalar(SnowflakeDbTransaction transaction, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create a command and prepare it for execution
-            System.Data.Common.DbCommand cmd = transaction.Connection.CreateCommand();
+            SnowflakeDbCommand cmd = (SnowflakeDbCommand)transaction.Connection.CreateCommand();
             PrepareCommand(cmd, transaction.Connection, transaction, commandType, commandText, commandParameters);
 
             //execute the command & return the results
             object retval = cmd.ExecuteScalar();
 
-            // detach the SqlParameters from the command object, so they can be used again.
+            // detach the SnowflakeDbParameters from the command object, so they can be used again.
             cmd.Parameters.Clear();
             return retval;
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a 1x1 resultset) against the specified
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a 1x1 resultset) against the specified
         /// SnowflakeDbTransaction using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -1275,12 +1280,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(transaction.Connection.ConnectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(transaction.Connection.ConnectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteScalar(transaction, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -1295,7 +1300,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         #region ExecuteXmlReader
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbConnection. 
+        /// Execute a SnowflakeDbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbConnection. 
         /// </summary>
         /// <remarks>
         /// e.g.:  
@@ -1307,27 +1312,27 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>an XmlReader containing the resultset generated by the command</returns>
         public static XmlReader ExecuteXmlReader(SnowflakeDbConnection connection, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteXmlReader(connection, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteXmlReader(connection, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
+        /// Execute a SnowflakeDbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  XmlReader r = ExecuteXmlReader(conn, CommandType.StoredProcedure, "GetOrders", new SqlParameter("@prodid", 24));
+        ///  XmlReader r = ExecuteXmlReader(conn, CommandType.StoredProcedure, "GetOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="connection">a valid SnowflakeDbConnection</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command using "FOR XML AUTO"</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>an XmlReader containing the resultset generated by the command</returns>
-        public static XmlReader ExecuteXmlReader(SnowflakeDbConnection connection, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static XmlReader ExecuteXmlReader(SnowflakeDbConnection connection, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create a command and prepare it for execution
-            System.Data.Common.DbCommand cmd = connection.CreateCommand();
+            SnowflakeDbCommand cmd = (SnowflakeDbCommand)connection.CreateCommand();
             PrepareCommand(cmd, connection, (SnowflakeDbTransaction)null, commandType, commandText, commandParameters);
 
             //create the DataAdapter & DataSet
@@ -1335,14 +1340,14 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             throw new Exception("ExecuteXmlReader not implemented");
             // XmlReader retval = cmd.ExecuteXmlReader();
 
-            // detach the SqlParameters from the command object, so they can be used again.
+            // detach the SnowflakeDbParameters from the command object, so they can be used again.
             //cmd.Parameters.Clear();
             //return retval;
 
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a resultset) against the specified SnowflakeDbConnection 
         /// using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -1362,12 +1367,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connection.ConnectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(connection.ConnectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteXmlReader(connection, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -1378,7 +1383,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbTransaction. 
+        /// Execute a SnowflakeDbCommand (that returns a resultset and takes no parameters) against the provided SnowflakeDbTransaction. 
         /// </summary>
         /// <remarks>
         /// e.g.:  
@@ -1390,27 +1395,27 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <returns>an XmlReader containing the resultset generated by the command</returns>
         public static XmlReader ExecuteXmlReader(SnowflakeDbTransaction transaction, CommandType commandType, string commandText)
         {
-            //pass through the call providing null for the set of SqlParameters
-            return ExecuteXmlReader(transaction, commandType, commandText, (SqlParameter[])null);
+            //pass through the call providing null for the set of SnowflakeDbParameters
+            return ExecuteXmlReader(transaction, commandType, commandText, (SnowflakeDbParameter[])null);
         }
 
         /// <summary>
-        /// Execute a System.Data.Common.DbCommand (that returns a resultset) against the specified SnowflakeDbTransaction
+        /// Execute a SnowflakeDbCommand (that returns a resultset) against the specified SnowflakeDbTransaction
         /// using the provided parameters.
         /// </summary>
         /// <remarks>
         /// e.g.:  
-        ///  XmlReader r = ExecuteXmlReader(trans, CommandType.StoredProcedure, "GetOrders", new SqlParameter("@prodid", 24));
+        ///  XmlReader r = ExecuteXmlReader(trans, CommandType.StoredProcedure, "GetOrders", new SnowflakeDbParameter("@prodid", 24));
         /// </remarks>
         /// <param name="transaction">a valid SnowflakeDbTransaction</param>
         /// <param name="commandType">the CommandType (stored procedure, text, etc.)</param>
         /// <param name="commandText">the stored procedure name or T-SQL command using "FOR XML AUTO"</param>
         /// <param name="commandParameters">an array of SqlParamters used to execute the command</param>
         /// <returns>an XmlReader containing the resultset generated by the command</returns>
-        public static XmlReader ExecuteXmlReader(SnowflakeDbTransaction transaction, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        public static XmlReader ExecuteXmlReader(SnowflakeDbTransaction transaction, CommandType commandType, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             //create a command and prepare it for execution
-            System.Data.Common.DbCommand cmd = transaction.Connection.CreateCommand();
+            SnowflakeDbCommand cmd = (SnowflakeDbCommand)transaction.Connection.CreateCommand();
             PrepareCommand(cmd, transaction.Connection, transaction, commandType, commandText, commandParameters);
 
             //create the DataAdapter & DataSet
@@ -1419,13 +1424,13 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             throw new Exception("ExecuteXmlReader not implemented");
 
 
-            // detach the SqlParameters from the command object, so they can be used again.
+            // detach the SnowflakeDbParameters from the command object, so they can be used again.
             //cmd.Parameters.Clear();
             //return retval;
         }
 
         /// <summary>
-        /// Execute a stored procedure via a System.Data.Common.DbCommand (that returns a resultset) against the specified 
+        /// Execute a stored procedure via a SnowflakeDbCommand (that returns a resultset) against the specified 
         /// SnowflakeDbTransaction using the provided parameter values.  This method will query the database to discover the parameters for the 
         /// stored procedure (the first time each stored procedure is called), and assign the values based on parameter order.
         /// </summary>
@@ -1445,12 +1450,12 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             if ((parameterValues != null) && (parameterValues.Length > 0))
             {
                 //pull the parameters for this stored procedure from the parameter cache (or discover them & populate the cache)
-                SqlParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(transaction.Connection.ConnectionString, spName);
+                SnowflakeDbParameter[] commandParameters = SqlHelperParameterCache.GetSpParameterSet(transaction.Connection.ConnectionString, spName);
 
                 //assign the provided values to these parameters based on parameter order
                 AssignParameterValues(commandParameters, parameterValues);
 
-                //call the overload that takes an array of SqlParameters
+                //call the overload that takes an array of SnowflakeDbParameters
                 return ExecuteXmlReader(transaction, CommandType.StoredProcedure, spName, commandParameters);
             }
             //otherwise we can just call the SP without params
@@ -1479,18 +1484,18 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         private static Hashtable paramCache = Hashtable.Synchronized(new Hashtable());
 
         /// <summary>
-        /// resolve at run time the appropriate set of SqlParameters for a stored procedure
+        /// resolve at run time the appropriate set of SnowflakeDbParameters for a stored procedure
         /// </summary>
         /// <param name="connectionString">a valid connection string for a SnowflakeDbConnection</param>
         /// <param name="spName">the name of the stored procedure</param>
         /// <param name="includeReturnValueParameter">whether or not to include their return value parameter</param>
         /// <returns></returns>
-        private static SqlParameter[] DiscoverSpParameterSet(string connectionString, string spName, bool includeReturnValueParameter)
+        private static SnowflakeDbParameter[] DiscoverSpParameterSet(string connectionString, string spName, bool includeReturnValueParameter)
         {
             //using (SnowflakeDbConnection cn = new SnowflakeDbConnection())
             //{
             //    cn.ConnectionString = connectionString;
-            //    using (System.Data.Common.DbCommand cmd = new System.Data.Common.DbCommand(spName, cn))
+            //    using (SnowflakeDbCommand cmd = new SnowflakeDbCommand(spName, cn))
             using (SqlConnection cn = new SqlConnection(connectionString))
             using (SqlCommand cmd = new SqlCommand(spName, cn))
             {
@@ -1504,7 +1509,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
                     cmd.Parameters.RemoveAt(0);
                 }
 
-                SqlParameter[] discoveredParameters = new SqlParameter[cmd.Parameters.Count]; ;
+                SnowflakeDbParameter[] discoveredParameters = new SnowflakeDbParameter[cmd.Parameters.Count]; ;
 
                 cmd.Parameters.CopyTo(discoveredParameters, 0);
 
@@ -1513,14 +1518,14 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
             //    }
         }
 
-        //deep copy of cached SqlParameter array
-        private static SqlParameter[] CloneParameters(SqlParameter[] originalParameters)
+        //deep copy of cached SnowflakeDbParameter array
+        private static SnowflakeDbParameter[] CloneParameters(SnowflakeDbParameter[] originalParameters)
         {
-            SqlParameter[] clonedParameters = new SqlParameter[originalParameters.Length];
+            SnowflakeDbParameter[] clonedParameters = new SnowflakeDbParameter[originalParameters.Length];
 
             for (int i = 0, j = originalParameters.Length; i < j; i++)
             {
-                clonedParameters[i] = (SqlParameter)((ICloneable)originalParameters[i]).Clone();
+                clonedParameters[i] = (SnowflakeDbParameter)((ICloneable)originalParameters[i]).Clone();
             }
 
             return clonedParameters;
@@ -1536,7 +1541,7 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <param name="connectionString">a valid connection string for a SnowflakeDbConnection</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <param name="commandParameters">an array of SqlParamters to be cached</param>
-        public static void CacheParameterSet(string connectionString, string commandText, params SqlParameter[] commandParameters)
+        public static void CacheParameterSet(string connectionString, string commandText, params SnowflakeDbParameter[] commandParameters)
         {
             string hashKey = connectionString + ":" + commandText;
 
@@ -1549,11 +1554,11 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <param name="connectionString">a valid connection string for a SnowflakeDbConnection</param>
         /// <param name="commandText">the stored procedure name or T-SQL command</param>
         /// <returns>an array of SqlParamters</returns>
-        public static SqlParameter[] GetCachedParameterSet(string connectionString, string commandText)
+        public static SnowflakeDbParameter[] GetCachedParameterSet(string connectionString, string commandText)
         {
             string hashKey = connectionString + ":" + commandText;
 
-            SqlParameter[] cachedParameters = (SqlParameter[])paramCache[hashKey];
+            SnowflakeDbParameter[] cachedParameters = (SnowflakeDbParameter[])paramCache[hashKey];
 
             if (cachedParameters == null)
             {
@@ -1570,21 +1575,21 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         #region Parameter Discovery Functions
 
         /// <summary>
-        /// Retrieves the set of SqlParameters appropriate for the stored procedure
+        /// Retrieves the set of SnowflakeDbParameters appropriate for the stored procedure
         /// </summary>
         /// <remarks>
         /// This method will query the database for this information, and then store it in a cache for future requests.
         /// </remarks>
         /// <param name="connectionString">a valid connection string for a SnowflakeDbConnection</param>
         /// <param name="spName">the name of the stored procedure</param>
-        /// <returns>an array of SqlParameters</returns>
-        public static SqlParameter[] GetSpParameterSet(string connectionString, string spName)
+        /// <returns>an array of SnowflakeDbParameters</returns>
+        public static SnowflakeDbParameter[] GetSpParameterSet(string connectionString, string spName)
         {
             return GetSpParameterSet(connectionString, spName, false);
         }
 
         /// <summary>
-        /// Retrieves the set of SqlParameters appropriate for the stored procedure
+        /// Retrieves the set of SnowflakeDbParameters appropriate for the stored procedure
         /// </summary>
         /// <remarks>
         /// This method will query the database for this information, and then store it in a cache for future requests.
@@ -1592,18 +1597,18 @@ namespace Microsoft.ApplicationBlocks.Data.NetCore.Snowflake
         /// <param name="connectionString">a valid connection string for a SnowflakeDbConnection</param>
         /// <param name="spName">the name of the stored procedure</param>
         /// <param name="includeReturnValueParameter">a bool value indicating whether the return value parameter should be included in the results</param>
-        /// <returns>an array of SqlParameters</returns>
-        public static SqlParameter[] GetSpParameterSet(string connectionString, string spName, bool includeReturnValueParameter)
+        /// <returns>an array of SnowflakeDbParameters</returns>
+        public static SnowflakeDbParameter[] GetSpParameterSet(string connectionString, string spName, bool includeReturnValueParameter)
         {
             string hashKey = connectionString + ":" + spName + (includeReturnValueParameter ? ":include ReturnValue Parameter" : "");
 
-            SqlParameter[] cachedParameters;
+            SnowflakeDbParameter[] cachedParameters;
 
-            cachedParameters = (SqlParameter[])paramCache[hashKey];
+            cachedParameters = (SnowflakeDbParameter[])paramCache[hashKey];
 
             if (cachedParameters == null)
             {
-                cachedParameters = (SqlParameter[])(paramCache[hashKey] = DiscoverSpParameterSet(connectionString, spName, includeReturnValueParameter));
+                cachedParameters = (SnowflakeDbParameter[])(paramCache[hashKey] = DiscoverSpParameterSet(connectionString, spName, includeReturnValueParameter));
             }
 
             return CloneParameters(cachedParameters);
