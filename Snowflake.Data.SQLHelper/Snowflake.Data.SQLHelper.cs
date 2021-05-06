@@ -24,7 +24,9 @@
 //  
 // https://github.com/gojimmypi/snowflake-connector-net
 //
-
+//
+// NOTE: text parameters require the not-yet-accepted PR#286
+// https://github.com/snowflakedb/snowflake-connector-net/pull/286/files
 
 using System;
 using System.Data;
