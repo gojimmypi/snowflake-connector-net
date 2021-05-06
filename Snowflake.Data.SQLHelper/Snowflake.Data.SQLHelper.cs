@@ -96,6 +96,8 @@ namespace Snowflake.Data
         /// This method will assign a value of DbNull to any parameter with a direction of
         /// InputOutput and a value of null.  
         /// 
+        /// Paramter names must be ordinal references, (e.g. 1, 2, etc)
+        /// 
         /// This behavior will prevent default values from being used, but
         /// this will be the less common case than an intended pure output parameter (derived as InputOutput)
         /// where the user provided no input value.
@@ -104,15 +106,23 @@ namespace Snowflake.Data
         /// <param name="commandParameters">an array of SnowflakeDbParameters tho be added to command</param>
         private static void AttachParameters(System.Data.Common.DbCommand command, SnowflakeDbParameter[] commandParameters)
         {
+            int variable_name = 0; // yes variable names are actually numbers
             foreach (SnowflakeDbParameter p in commandParameters)
             {
+                variable_name++;
                 //check for derived output value with no value assigned
                 if ((p.Direction == ParameterDirection.InputOutput) && (p.Value == null))
                 {
                     p.Value = DBNull.Value;
                 }
-
-                command.Parameters.Add(p);
+                if (p.ParameterName != variable_name.ToString())
+                {
+                    throw new Exception("ERROR: Snowflake parameters must by sequential numbers for each '(?)' value, starting at 1 ");
+                }
+                else
+                {
+                    command.Parameters.Add(p);
+                }
             }
         }
 
@@ -634,7 +644,9 @@ namespace Snowflake.Data
             PrepareCommand(cmd, connection, (SnowflakeDbTransaction)null, commandType, commandText, commandParameters);
 
             //create the DataAdapter & DataSet
-            SnowflakeDbDataAdapter da = new SnowflakeDbDataAdapter(commandText, connection);
+            // original: SnowflakeDbDataAdapter da = new SnowflakeDbDataAdapter(commandText, connection);
+            SnowflakeDbDataAdapter da = new SnowflakeDbDataAdapter((SnowflakeDbCommand)cmd);
+
             DataSet ds = new DataSet();
             cmd.CommandTimeout = 400;
             //fill the DataSet using default values for DataTable names, etc.
