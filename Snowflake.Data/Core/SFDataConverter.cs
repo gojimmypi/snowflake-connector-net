@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2012-2019 Snowflake Computing Inc. All rights reserved.
  */
 
@@ -312,8 +312,6 @@ namespace Snowflake.Data.Core
                     {
                        return ((long)(((DateTimeOffset)srcVal).UtcTicks - UnixEpoch.Ticks) * 100).ToString();
                     }
-                case SFDataType.TEXT:
-                    return srcVal.ToString();
                 default:
                     throw new NotImplementedException();
             }
