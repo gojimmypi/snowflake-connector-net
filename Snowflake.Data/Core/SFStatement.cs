@@ -95,25 +95,27 @@ namespace Snowflake.Data.Core
                 describeOnly = describeOnly,
             };
 
-            return new SFRestRequest
+            return new SFRestRequest(SfSession.InsecureMode)
             {
                 Url = queryUri,
                 authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
                 serviceName = SfSession.ParameterMap.ContainsKey(SFSessionParameter.SERVICE_NAME)
                                 ? (String)SfSession.ParameterMap[SFSessionParameter.SERVICE_NAME] : null,
                 jsonBody = postBody,
-                HttpTimeout = Timeout.InfiniteTimeSpan
+                HttpTimeout = Timeout.InfiniteTimeSpan,
+                RestTimeout = Timeout.InfiniteTimeSpan
             };
         }
 
         private SFRestRequest BuildResultRequest(string resultPath)
         {
             var uri = SfSession.BuildUri(resultPath);
-            return new SFRestRequest()
+            return new SFRestRequest(SfSession.InsecureMode)
             {
                 Url = uri,
                 authorizationToken = String.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
-                HttpTimeout = Timeout.InfiniteTimeSpan
+                HttpTimeout = Timeout.InfiniteTimeSpan,
+                RestTimeout = Timeout.InfiniteTimeSpan
             };
         }
 
@@ -147,7 +149,18 @@ namespace Snowflake.Data.Core
                 externalCancellationToken);
             if (!_linkedCancellationTokenSouce.IsCancellationRequested)
             {
-                _linkedCancellationTokenSouce.Token.Register(() => Cancel());
+                _linkedCancellationTokenSouce.Token.Register(() => 
+                {
+                    try
+                    {
+                        Cancel();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Prevent an unhandled exception from being thrown
+                        logger.Error("Unable to cancel query.", ex);
+                    }
+                });
             }
         }
 
@@ -280,7 +293,7 @@ namespace Snowflake.Data.Core
                     requestId = _requestId
                 };
 
-                return new SFRestRequest()
+                return new SFRestRequest(SfSession.InsecureMode)
                 {
                     Url = uri,
                     authorizationToken = string.Format(SF_AUTHORIZATION_SNOWFLAKE_FMT, SfSession.sessionToken),
